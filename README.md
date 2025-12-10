@@ -105,10 +105,3 @@ python main.py
 
 ---
 
-## 🤝 Katkıda Bulunma
-
-Hata bildirimleri ve özellik istekleri için lütfen "Issues" bölümünü kullanın. Pull request'ler memnuniyetle karşılanır.
-
-## 📄 Lisans
-
-Bu proje MIT Lisansı ile lisanslanmıştır. Detaylar için `LICENSE` dosyasına bakınız.
