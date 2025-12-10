@@ -240,8 +240,19 @@ class PesPlanusAnalyzer:
         if image is None:
             return {"error": "Görüntü okunamadı"}
 
-            mask_tensor = torch.sigmoid(output) > 0.5
-            mask_resized = mask_tensor.squeeze().cpu().numpy().astype(np.uint8) * 255
+        original_h, original_w = image.shape[:2]
+
+        if self.model is None:
+             return {"error": "Model yüklü değil"}
+
+        # 1. Prediction
+        input_tensor = self.preprocess(image).to(self.device)
+        
+        with torch.no_grad():
+            output = self.model(input_tensor)
+            
+        mask_tensor = torch.sigmoid(output) > 0.5
+        mask_resized = mask_tensor.squeeze().cpu().numpy().astype(np.uint8) * 255
             
         # Resize mask back to original size for analysis
         mask_original = cv2.resize(mask_resized, (original_w, original_h), interpolation=cv2.INTER_NEAREST)
