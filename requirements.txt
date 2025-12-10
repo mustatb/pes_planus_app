@@ -1,0 +1,8 @@
+PySide6
+pydicom
+numpy
+pillow
+segmentation_models_pytorch
+opencv-python
+torch
+torchvision
