@@ -12,7 +12,7 @@ def analyze_calcaneal_pitch(
     prediction_mask: np.ndarray
 ) -> Tuple[np.ndarray, float, Tuple[Tuple[int, int], Tuple[int, int]], Tuple[Tuple[int, int], Tuple[int, int]]]:
     """
-    Analyzes the Calcaneal Pitch Angle with robust Convex Hull logic and correct Ground Line visualization.
+    Analyzes the Calcaneal Pitch Angle with robust Convex Hull logic, strict tie-breaking, and virtual Ground Line.
     """
     
     # Ensure formats
@@ -35,141 +35,108 @@ def analyze_calcaneal_pitch(
     
     largest_contour = max(contours, key=cv2.contourArea)
     
-    # --- 2. Keypoint Detection (Convex Hull Bridge Method) ---
-    # use convex hull to bridge concave regions of the bone
-    hull = cv2.convexHull(largest_contour)
+    # --- 2. Keypoint Detection (Vertical Split + Strict Tie-Breaking) ---
+    # Find bounding box
+    x, y, w, h = cv2.boundingRect(largest_contour)
+    mid_x = x + w // 2
     
-    # Calculate Centroid of the MASK for splitting logic
-    M = cv2.moments(largest_contour)
-    if M["m00"] == 0:
-         return vis_img, 0.0, ((0, 0), (0, 0)), ((0, 0), (0, 0))
-         
-    cx = int(M["m10"] / M["m00"])
-
-    # Extract hull vertices
-    # hull shape is (N, 1, 2)
+    # Get all points in the contour (or hull for robustness)
+    hull = cv2.convexHull(largest_contour)
     hull_points = hull[:, 0, :]
     
-    # Split into Posterior (Left of centroid) and Anterior (Right of centroid)
-    # assuming standard lateral view where heel is posterior.
-    left_points = [pt for pt in hull_points if pt[0] < cx] 
-    right_points = [pt for pt in hull_points if pt[0] >= cx]
+    # Split into Posterior (Left) and Anterior (Right) halves based on Geometric Vertical Center
+    left_half = [pt for pt in hull_points if pt[0] < mid_x]
+    right_half = [pt for pt in hull_points if pt[0] >= mid_x]
     
-    if not left_points or not right_points:
-         # Fallback if split fails -> minimal logic
-         return vis_img, 0.0, ((0, 0), (0, 0)), ((0, 0), (0, 0))
-
-    # Point A: Deepest point (Max Y) in Posterior/Left
-    pa = max(left_points, key=lambda p: p[1])
+    # Find Points with Strict Rules
+    
+    # Point A (Posterior/Left): Deepest (Max Y). Tie-break: Leftmost (Min X)
+    if not left_half: 
+         # Fallback: Just take closest to left edge
+         pa = min(hull_points, key=lambda p: p[0])
+    else:
+         # Sort: Primary Key = Y (descending), Secondary Key = X (ascending)
+         # We want max Y, then min X.
+         # Python sort is stable.
+         sorted_left = sorted(left_half, key=lambda p: (-p[1], p[0]))
+         pa = sorted_left[0]
+         
+    # Point B (Anterior/Right): Deepest (Max Y). Tie-break: Rightmost (Max X)
+    if not right_half:
+         # Fallback: Just take closest to right edge
+         pb = max(hull_points, key=lambda p: p[0])
+    else:
+         # Sort: Primary Key = Y (descending), Secondary Key = X (descending)
+         # We want max Y, then max X.
+         sorted_right = sorted(right_half, key=lambda p: (-p[1], -p[0]))
+         pb = sorted_right[0]
+    
     pa = tuple(pa)
-
-    # Point B: Deepest point (Max Y) in Anterior/Right
-    pb = max(right_points, key=lambda p: p[1])
     pb = tuple(pb)
     
-    # Ensure Left-to-Right order
+    # Ensure Left-to-Right order (just in case fallback failed)
     if pa[0] > pb[0]:
         pa, pb = pb, pa
         
-    # --- 3. Ground Line Detection & Visualization ---
-    roi_start_y = int(h_img * 0.70) # Scan bottom 30%
-    roi_img = original_img[roi_start_y:, :]
-    if len(roi_img.shape) == 3:
-        roi_gray = cv2.cvtColor(roi_img, cv2.COLOR_BGR2GRAY)
-    else:
-        roi_gray = roi_img
-        
-    edges = cv2.Canny(roi_gray, 30, 100)
-    lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold=40, minLineLength=w_img*0.15, maxLineGap=20)
+    # --- 3. Ground Line Detection (Virtual Horizontal) ---
+    # Ground Line: Virtual horizontal line passing through the LOWEST point (Max Y).
+    # This ensures the floor is at the bottom of the bone structure.
+    
+    ground_y = max(pa[1], pb[1])
+    
+    vis_gx1 = 0
+    vis_gy1 = ground_y
+    
+    vis_gx2 = w_img
+    vis_gy2 = ground_y
     
     ground_angle = 0.0
-    ground_points = ((0, h_img-1), (w_img, h_img-1)) 
+    ground_points = ((vis_gx1, vis_gy1), (vis_gx2, vis_gy2))
     
-    best_line = None
-    if lines is not None:
-        valid_lines = []
-        for line in lines:
-            x1, y1, x2, y2 = line[0]
-            if x2 == x1: continue
-            slope = (y2 - y1) / (x2 - x1)
-            # strictly horizontal check
-            if abs(slope) < 0.15:
-                # Store linear length and average Y
-                length = np.sqrt((x2-x1)**2 + (y2-y1)**2)
-                avg_y = (y1 + y2) / 2
-                valid_lines.append((line[0], length, avg_y))
-        
-        if valid_lines:
-            # Heuristic: Prefer lower lines (higher Y) that have decent length.
-            # Sort by Y descending.
-            valid_lines.sort(key=lambda x: x[2], reverse=True)
-            # Pick the lowest one (highest Y)
-            best_line_coords = valid_lines[0][0]
-            bx1, by1, bx2, by2 = best_line_coords
-            best_line = (bx1, by1, bx2, by2)
-
+    # Draw Ground Line (Cyan)
+    cv2.line(vis_img, ground_points[0], ground_points[1], (255, 255, 0), 2)
+    
     # --- 4. Calculation ---
-    # Ground Angle
-    if best_line:
-         bx1, by1, bx2, by2 = best_line
-         gdx = bx2 - bx1
-         gdy = (by2 + roi_start_y) - (by1 + roi_start_y) # relative dy same as global
-         ground_angle = math.degrees(math.atan2(gdy, gdx))
-         
-         # --- FIX 1: Visualization using Extended Line Equation ---
-         # Convert to global
-         gx1_g = bx1
-         gy1_g = by1 + roi_start_y
-         gx2_g = bx2
-         gy2_g = by2 + roi_start_y
-         
-         # y = mx + c
-         if gdx == 0:
-             # Vertical shouldn't happen due to slope filter, but good practice
-             vis_gx1, vis_gy1 = gx1_g, 0
-             vis_gx2, vis_gy2 = gx1_g, h_img
-         else:
-             m = gdy / gdx
-             c = gy1_g - m * gx1_g
-             
-             vis_gx1 = 0
-             vis_gy1 = int(c)
-             vis_gx2 = w_img
-             vis_gy2 = int(m * w_img + c)
-             
-         ground_points = ((vis_gx1, vis_gy1), (vis_gx2, vis_gy2))
-         
-         # Draw the line passing through detected object
-         cv2.line(vis_img, ground_points[0], ground_points[1], (255, 255, 0), 2)
-    else:
-         # Fallback
-         cv2.line(vis_img, ground_points[0], ground_points[1], (255, 255, 0), 2)
-
-    # Calcaneus Angle
+    
+    # Calculate vector angle for calcaneus line (pa -> pb)
     dx = pb[0] - pa[0]
     dy = pb[1] - pa[1]
     
     if dx == 0:
         calc_angle = 90.0
     else:
+        # atan2 returns -180 to 180.
+        # Since Y increases downwards, positive dy means downwards.
+        # But we only care about the absolute angle against the horizontal.
         calc_angle = math.degrees(math.atan2(dy, dx))
         
-    pitch_angle = abs(calc_angle - ground_angle)
+    # Pitch Angle = Absolute angle of calcaneus vs horizontal (0)
+    pitch_angle = abs(calc_angle)
     pitch_angle = round(pitch_angle, 1)
 
-    # --- 5. Visualization (Calcaneus) ---
-    # Draw logic for Calcaneus Line
-    cv2.line(vis_img, pa, pb, (255, 0, 255), 3) # Magenta Bridge
-
-    # Draw Keypoints (from Hull)
-    cv2.circle(vis_img, pa, 6, (0, 0, 255), -1) 
-    cv2.circle(vis_img, pb, 6, (0, 255, 0), -1)
+    # --- 5. Visualization ---
+    
+    # Draw Calcaneus Line (Magenta)
+    cv2.line(vis_img, pa, pb, (255, 0, 255), 3) 
+    
+    # Draw Keypoints
+    # Point A - Posterior (Heel) - Red
+    cv2.circle(vis_img, pa, 8, (0, 0, 255), -1) 
+    cv2.circle(vis_img, pa, 10, (255, 255, 255), 2) 
+    
+    # Point B - Anterior (Joint) - Green
+    cv2.circle(vis_img, pb, 8, (0, 255, 0), -1) 
+    cv2.circle(vis_img, pb, 10, (255, 255, 255), 2) 
     
     # Text Label
     label_text = f"{pitch_angle} deg"
     mid_x = (pa[0] + pb[0]) // 2
-    mid_y = (pa[1] + pb[1]) // 2 - 15
-    cv2.putText(vis_img, label_text, (mid_x, mid_y), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+    mid_y = (pa[1] + pb[1]) // 2 - 20
+    
+    # Add background box for text readability
+    (tw, th), _ = cv2.getTextSize(label_text, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2)
+    cv2.rectangle(vis_img, (mid_x - 5, mid_y - th - 5), (mid_x + tw + 5, mid_y + 5), (0,0,0), -1)
+    cv2.putText(vis_img, label_text, (mid_x, mid_y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
     
     return vis_img, pitch_angle, (pa, pb), ground_points
 
