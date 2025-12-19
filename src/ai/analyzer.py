@@ -75,28 +75,48 @@ def analyze_calcaneal_pitch(
     # Point A (Posterior/Heel) & Point B (Anterior/Joint) Logic
     # We identify the Heel (Point A) as the point closest to the bottom (Max Y).
     
-    p1 = get_corner_point(left_half, is_left_half=True)
-    p2 = get_corner_point(right_half, is_left_half=False)
+    p1_deepest = get_corner_point(left_half, is_left_half=True)
+    p2_deepest = get_corner_point(right_half, is_left_half=False)
     
-    # Fallbacks if detection failed (rare)
-    if p1 is None: p1 = min(hull_points, key=lambda p: p[0])
-    if p2 is None: p2 = max(hull_points, key=lambda p: p[0])
-    
-    p1 = tuple(p1)
-    p2 = tuple(p2)
+    # Fallbacks
+    if p1_deepest is None: p1_deepest = min(hull_points, key=lambda p: p[0])
+    if p2_deepest is None: p2_deepest = max(hull_points, key=lambda p: p[0])
 
-    # Determine which is Heel (Deepest / Highest Y value)
-    if p1[1] >= p2[1]:
-        pa = p1 # Left is Heel
-        pb = p2 # Right is Anterior
+    p1_deepest = tuple(p1_deepest)
+    p2_deepest = tuple(p2_deepest)
+
+    # 1. Determine Orientation (Left vs Right)
+    # The side with the DEEPER point is the Heel side.
+    if p1_deepest[1] >= p2_deepest[1]:
+        # Left is Deeper -> Heel is Left, Toes are Right
+        heel_is_left = True
+        pa = p1_deepest # Point A is Heel (Deepest)
+        
+        # Point B: Anterior-Inferior Corner (Right Half)
+        # Target: Bottom-Right most point in the Right Half.
+        # Score: Maximize (X + Y). (Forward + Down)
+        # Large X (Right), Large Y (Down).
+        if right_half:
+            pb = max(right_half, key=lambda p: int(p[0]) + int(p[1]))
+            pb = tuple(pb)
+        else:
+            pb = p2_deepest
+            
     else:
-        pa = p2 # Right is Heel
-        pb = p1 # Left is Anterior
+        # Right is Deeper -> Heel is Right, Toes are Left
+        heel_is_left = False
+        pa = p2_deepest # Point A is Heel (Deepest)
         
-    # We DO NOT force Left-to-Right swap anymore.
-    # Point A is ALWAYS Heel. Point B is ALWAYS Anterior.
-    # This allows ground_y = pa[1] to always work correctly.
-        
+        # Point B: Anterior-Inferior Corner (Left Half)
+        # Target: Bottom-Left most point in the Left Half.
+        # Score: Maximize (-X + Y) -> Minimize (X - Y).
+        # Small X (Left), Large Y (Down).
+        if left_half:
+            pb = min(left_half, key=lambda p: int(p[0]) - int(p[1]))
+            pb = tuple(pb)
+        else:
+            pb = p1_deepest
+
     # --- 3. Ground Line Detection (Fixed to Point A) ---
     # User Request: "Mavi çizgi her zaman topuğun (pa) arkasına doğru uzanmalı."
     # Ground Line must be perfectly horizontal (0 degree) at Point A's Y level.
@@ -106,7 +126,7 @@ def analyze_calcaneal_pitch(
     # Dynamic Visualization based on Heel Direction
     # Goal: Draw line from Heel (pa) extending TOWARDS the Toes (pb) for 250px.
     
-    if pa[0] < pb[0]:
+    if heel_is_left:
         # Heel Left, Toes Right -> Extend Right
         vis_gx1 = pa[0]
         vis_gx2 = min(w_img, pa[0] + 250)
