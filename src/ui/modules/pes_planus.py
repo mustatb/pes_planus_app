@@ -247,6 +247,51 @@ class PesPlanusWidget(QWidget):
             self.tool_group.checkedAction().setChecked(False)
         self.canvas.set_tool(None)
 
+    def display_results(self, result):
+        # 2. Reset and set data
+        self.reset_drawing()
+        
+        # Get Lines from result
+        lines = result.get("lines", [])
+        if len(lines) >= 2:
+            calc_line_coords = lines[0]
+            ground_line_coords = lines[1]
+            
+            c1, c2 = calc_line_coords
+            g1, g2 = ground_line_coords
+             
+            # Calcaneus (Magenta)
+            from src.ui.canvas import DraggablePoint, QColor
+            
+            point_c1 = DraggablePoint(c1[0], c1[1], 6, QColor("#FF00FF"), self.canvas)
+            self.canvas.scene.addItem(point_c1)
+            self.canvas.calc_points.append(point_c1)
+            
+            point_c2 = DraggablePoint(c2[0], c2[1], 6, QColor("#FF00FF"), self.canvas)
+            self.canvas.scene.addItem(point_c2)
+            self.canvas.calc_points.append(point_c2)
+            
+            # Ground (Cyan)
+            point_g1 = DraggablePoint(g1[0], g1[1], 6, QColor("#00FFFF"), self.canvas)
+            self.canvas.scene.addItem(point_g1)
+            self.canvas.ground_points.append(point_g1)
+            
+            point_g2 = DraggablePoint(g2[0], g2[1], 6, QColor("#00FFFF"), self.canvas)
+            self.canvas.scene.addItem(point_g2)
+            self.canvas.ground_points.append(point_g2)
+            
+            # Trigger update
+            self.canvas.update_lines()
+            
+            self.lbl_status.setText(f"Analiz tamamlandı. Açı: {result['angle']}°")
+            
+            # 3. Update Classification Display
+            cat, color = get_angle_classification(result['angle'], "calcaneal")
+            self.lbl_class.setText(cat)
+            self.lbl_class.setStyleSheet(f"color: {color}; font-weight: bold; font-size: 14px;")
+            self.lbl_angle.setText(f"{result['angle']}°")
+            self.lbl_angle.setStyleSheet(f"font-size: 36px; font-weight: bold; color: {color};")
+
     def run_ai_analysis(self):
         if self.current_image_array is None:
             QMessageBox.warning(self, "Uyarı", "Lütfen önce bir görüntü yükleyin.")
@@ -280,49 +325,11 @@ class PesPlanusWidget(QWidget):
                 QMessageBox.warning(self, "Analiz Hatası", result["error"])
                 self.lbl_status.setText(f"Hata: {result['error']}")
             else:
-                # 2. Reset and set data
-                self.reset_drawing()
+                self.display_results(result)
                 
-                # Get Lines from result
-                lines = result.get("lines", [])
-                if len(lines) >= 2:
-                    calc_line_coords = lines[0]
-                    ground_line_coords = lines[1]
-                    
-                    c1, c2 = calc_line_coords
-                    g1, g2 = ground_line_coords
-                     
-                    # Calcaneus (Magenta)
-                    from src.ui.canvas import DraggablePoint, QColor
-                    
-                    point_c1 = DraggablePoint(c1[0], c1[1], 6, QColor("#FF00FF"), self.canvas)
-                    self.canvas.scene.addItem(point_c1)
-                    self.canvas.calc_points.append(point_c1)
-                    
-                    point_c2 = DraggablePoint(c2[0], c2[1], 6, QColor("#FF00FF"), self.canvas)
-                    self.canvas.scene.addItem(point_c2)
-                    self.canvas.calc_points.append(point_c2)
-                    
-                    # Ground (Cyan)
-                    point_g1 = DraggablePoint(g1[0], g1[1], 6, QColor("#00FFFF"), self.canvas)
-                    self.canvas.scene.addItem(point_g1)
-                    self.canvas.ground_points.append(point_g1)
-                    
-                    point_g2 = DraggablePoint(g2[0], g2[1], 6, QColor("#00FFFF"), self.canvas)
-                    self.canvas.scene.addItem(point_g2)
-                    self.canvas.ground_points.append(point_g2)
-                    
-                    # Trigger update
-                    self.canvas.update_lines()
-                    
-                    self.lbl_status.setText(f"Analiz tamamlandı. Açı: {result['angle']}°")
-                    
-                    # 3. Update Classification Display
-                    cat, color = get_angle_classification(result['angle'], "calcaneal")
-                    self.lbl_class.setText(cat)
-                    self.lbl_class.setStyleSheet(f"color: {color}; font-weight: bold; font-size: 14px;")
-                    self.lbl_angle.setText(f"{result['angle']}°")
-                    self.lbl_angle.setStyleSheet(f"font-size: 36px; font-weight: bold; color: {color};")
+        except Exception as e:
+             QMessageBox.critical(self, "Hata", f"Analiz sırasında bir hata oluştu:\n{str(e)}")
+             self.lbl_status.setText("Analiz hatası.")
                 
         except Exception as e:
              QMessageBox.critical(self, "Hata", f"Analiz sırasında bir hata oluştu:\n{str(e)}")

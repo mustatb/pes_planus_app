@@ -1,4 +1,5 @@
 import os
+from src.core.dicom_loader import load_image_array, load_dicom_array
 import cv2
 import numpy as np
 import torch
@@ -239,8 +240,18 @@ class PesPlanusAnalyzer:
         Main pipeline that calls the new robust algorithm.
         """
         # 0. Load Image
+        image = None
         if isinstance(image_data, str):
-            image = cv2.imread(image_data, cv2.IMREAD_GRAYSCALE)
+            # Check extension or try divers
+            ext = os.path.splitext(image_data)[1].lower()
+            if ext in ['.dcm', '.dicom']:
+                image, _ = load_dicom_array(image_data)
+            else:
+                image, _ = load_image_array(image_data)
+                
+            if image is None:
+                 return {"error": f"Görüntü okunamadı: {image_data}"}
+                 
         elif isinstance(image_data, np.ndarray):
             if len(image_data.shape) == 3:
                 image = cv2.cvtColor(image_data, cv2.COLOR_BGR2GRAY)

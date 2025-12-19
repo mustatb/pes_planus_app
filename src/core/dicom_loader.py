@@ -1,3 +1,4 @@
+import os
 import pydicom
 import numpy as np
 from PIL import Image
@@ -56,16 +57,25 @@ def load_dicom_array(dicom_path):
 def load_image_array(image_path):
     """
     Loads a standard image (JPG/PNG) as a numpy array (grayscale) + metadata.
+    Uses cv2.imdecode + np.fromfile to handle Unicode paths on Windows.
     """
     try:
-        img = Image.open(image_path).convert("L")
+        import cv2
+        # Robust Unicode path loading
+        # OpenCV's standard imread doesn't assume utf-8 on Windows
+        # Solution: Read binary -> Decode
+        stream = np.fromfile(image_path, dtype=np.uint8)
+        img = cv2.imdecode(stream, cv2.IMREAD_GRAYSCALE)
+        
+        if img is None:
+             raise ValueError("Görüntü okunamadı (Decode Error).")
+             
         metadata = {
-            "Filename": image_path.split("\\")[-1],
-            "Format": img.format,
-            "Size": f"{img.size[0]}x{img.size[1]}",
-            "Mode": img.mode
+            "Filename": os.path.basename(image_path),
+            "Size": f"{img.shape[1]}x{img.shape[0]}",
+            "Mode": "Grayscale"
         }
-        return np.array(img), metadata
+        return img, metadata
     except Exception as e:
         print(f"Error loading Image: {e}")
         return None, None

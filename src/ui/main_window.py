@@ -3,6 +3,7 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QTabWidget)
 from src.ui.styles import DARK_THEME
 from src.ui.modules.pes_planus import PesPlanusWidget
 from src.ui.modules.free_drawing import FreeDrawingWidget
+from src.ui.modules.batch_analysis import BatchAnalysisWidget
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -42,8 +43,10 @@ class MainWindow(QMainWindow):
         # Modules
         self.pes_planus_widget = PesPlanusWidget()
         self.free_drawing_widget = FreeDrawingWidget()
+        self.batch_analysis_widget = BatchAnalysisWidget()
         
         self.tabs.addTab(self.pes_planus_widget, "Pes Planus Analizi")
+        self.tabs.addTab(self.batch_analysis_widget, "Toplu Analiz")
         self.tabs.addTab(self.free_drawing_widget, "Serbest Çizim & Cetvel")
         
         layout.addWidget(self.tabs)

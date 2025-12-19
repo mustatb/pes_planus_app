@@ -6,3 +6,5 @@ segmentation_models_pytorch
 opencv-python
 torch
 torchvision
+pandas
+openpyxl
