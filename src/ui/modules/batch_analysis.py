@@ -386,6 +386,14 @@ class BatchAnalysisWidget(QWidget):
                 "Onaylandı": "Evet" if item.is_confirmed else "Hayır"
             })
             
+        # Custom Sort: ID/Name Ascending, Side Descending (R first) or custom priority
+        # Let's use a lambda: (Name, 0 if R else 1)
+        data.sort(key=lambda x: (
+            x["Dizi Adı"], 
+            x["Hasta ID"],
+            0 if x["Taraf"] in ["R", "Right", "Sag", "Sağ"] else 1
+        ))
+
         df = pd.DataFrame(data)
         try:
             df.to_excel(path, index=False)
@@ -415,6 +423,10 @@ class BatchAnalysisWidget(QWidget):
         processed_data = [] # For Excel inside Zip
         
         try:
+            # Sort items first? No, we might as well process them all then sort the list of dicts.
+            # But maybe sorting `self.items` helps images appear in order in folder?
+            # Let's sort the `processed_data` list before saving excel.
+            
             # Process Items
             for item in self.items:
                 # Filter: Only processed ones or all? Let's take anything with valid angle or status
@@ -503,6 +515,13 @@ class BatchAnalysisWidget(QWidget):
             
             # 4. Create Excel inside Temp
             if processed_data:
+                # Custom Sort: ID/Name Ascending, Side Descending (R first)
+                processed_data.sort(key=lambda x: (
+                    x["Hasta İsim"], 
+                    x["ID"],
+                    0 if x["Taraf"] in ["R", "Right", "Sag", "Sağ"] else 1
+                ))
+                
                 df = pd.DataFrame(processed_data)
                 excel_path = os.path.join(temp_dir, "Ozet_Tablo.xlsx")
                 df.to_excel(excel_path, index=False)
