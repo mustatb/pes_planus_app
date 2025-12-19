@@ -1,10 +1,11 @@
 import math
 
-def calculate_angle(p1, p2, p3, p4):
+def calculate_angle(p1, p2, p3, p4, one_sided=False):
     """
     Calculates the angle between two lines defined by (p1, p2) and (p3, p4).
     Points are tuples (x, y).
     Returns angle in degrees.
+    if one_sided=True: returns acute angle (0-90) regardless of vector direction.
     """
     # Vector 1
     v1_x = p2[0] - p1[0]
@@ -26,11 +27,10 @@ def calculate_angle(p1, p2, p3, p4):
     
     angle = math.degrees(math.acos(cos_theta))
     
-    # We typically want the acute angle for this medical measurement
-    # But strictly speaking, calcaneal pitch is specific. 
-    # For this tool, we'll return the raw vector angle, but ensure it's <= 180.
-    # If the user draws lines in opposite directions, the angle might be obtuse.
-    # We can normalize it to be <= 90 if that's the convention, but let's stick to vector angle for now.
+    if one_sided:
+        # Return acute angle (0-90)
+        if angle > 90:
+            angle = 180 - angle
     
     return round(angle, 2)
 

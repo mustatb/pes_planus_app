@@ -338,7 +338,11 @@ class PesPlanusWidget(QWidget):
             p3 = (points[2].x(), points[2].y())
             p4 = (points[3].x(), points[3].y())
             
-            angle = calculate_angle(p1, p2, p3, p4)
+            mode_key = "mearys" if "Meary" in self.combo_mode.currentText() else "calcaneal"
+            
+            # For Calcaneal Pitch, we want strict acute angle (0-90)
+            is_calcaneal = (mode_key == "calcaneal")
+            angle = calculate_angle(p1, p2, p3, p4, one_sided=is_calcaneal)
             self.lbl_angle.setText(f"{angle}°")
             
             # Classification

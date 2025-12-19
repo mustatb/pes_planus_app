@@ -48,70 +48,95 @@ def analyze_calcaneal_pitch(
     left_half = [pt for pt in hull_points if pt[0] < mid_x]
     right_half = [pt for pt in hull_points if pt[0] >= mid_x]
     
-    # Find Points with Strict Rules
+    # Find Points with "Lowest 5% Slice" Logic
+    # Goal: Target the corners (tubercle) rather than just the lowest pixel.
     
-    # Point A (Posterior/Left): Deepest (Max Y). Tie-break: Leftmost (Min X)
-    if not left_half: 
-         # Fallback: Just take closest to left edge
-         pa = min(hull_points, key=lambda p: p[0])
-    else:
-         # Sort: Primary Key = Y (descending), Secondary Key = X (ascending)
-         # We want max Y, then min X.
-         # Python sort is stable.
-         sorted_left = sorted(left_half, key=lambda p: (-p[1], p[0]))
-         pa = sorted_left[0]
-         
-    # Point B (Anterior/Right): Deepest (Max Y). Tie-break: Rightmost (Max X)
-    if not right_half:
-         # Fallback: Just take closest to right edge
-         pb = max(hull_points, key=lambda p: p[0])
-    else:
-         # Sort: Primary Key = Y (descending), Secondary Key = X (descending)
-         # We want max Y, then max X.
-         sorted_right = sorted(right_half, key=lambda p: (-p[1], -p[0]))
-         pb = sorted_right[0]
-    
-    pa = tuple(pa)
-    pb = tuple(pb)
-    
-    # Ensure Left-to-Right order (just in case fallback failed)
-    if pa[0] > pb[0]:
-        pa, pb = pb, pa
+    # helper for finding corner in bottom slice
+    def get_corner_point(points, is_left_half):
+        if not points: return None
         
-    # --- 3. Ground Line Detection (Virtual Horizontal) ---
-    # Ground Line: Virtual horizontal line passing through the LOWEST point (Max Y).
-    # This ensures the floor is at the bottom of the bone structure.
+        # 1. Find Deepest Level
+        y_values = [p[1] for p in points]
+        y_max = max(y_values) # Deepest point
+        
+        # 2. Strict Filter: Get ALL pixels at this deepest level
+        # User Request: "bu bölgedeki en alt seviyedeki tüm pikselleri (maksimum Y) belirle"
+        candidates = [p for p in points if p[1] == y_max]
+        
+        if not candidates: 
+            return points[0] # Should not happen
+            
+        # 3. Center of Mass: Calculate Mean X
+        # User Request: "X koordinatlarının ortalamasını (mean) alarak... tam kavisin merkezine sabitle"
+        avg_x = sum(p[0] for p in candidates) / len(candidates)
+        
+        return [int(avg_x), y_max]
+
+    # Point A (Posterior/Heel) & Point B (Anterior/Joint) Logic
+    # We identify the Heel (Point A) as the point closest to the bottom (Max Y).
     
-    ground_y = max(pa[1], pb[1])
+    p1 = get_corner_point(left_half, is_left_half=True)
+    p2 = get_corner_point(right_half, is_left_half=False)
     
-    vis_gx1 = 0
+    # Fallbacks if detection failed (rare)
+    if p1 is None: p1 = min(hull_points, key=lambda p: p[0])
+    if p2 is None: p2 = max(hull_points, key=lambda p: p[0])
+    
+    p1 = tuple(p1)
+    p2 = tuple(p2)
+
+    # Determine which is Heel (Deepest / Highest Y value)
+    if p1[1] >= p2[1]:
+        pa = p1 # Left is Heel
+        pb = p2 # Right is Anterior
+    else:
+        pa = p2 # Right is Heel
+        pb = p1 # Left is Anterior
+        
+    # We DO NOT force Left-to-Right swap anymore.
+    # Point A is ALWAYS Heel. Point B is ALWAYS Anterior.
+    # This allows ground_y = pa[1] to always work correctly.
+        
+    # --- 3. Ground Line Detection (Fixed to Point A) ---
+    # User Request: "Mavi çizgi her zaman topuğun (pa) arkasına doğru uzanmalı."
+    # Ground Line must be perfectly horizontal (0 degree) at Point A's Y level.
+    
+    ground_y = pa[1]
+    
+    # Dynamic Visualization based on Heel Direction
+    # Goal: Draw line from Heel (pa) extending TOWARDS the Toes (pb) for 250px.
+    
+    if pa[0] < pb[0]:
+        # Heel Left, Toes Right -> Extend Right
+        vis_gx1 = pa[0]
+        vis_gx2 = min(w_img, pa[0] + 250)
+    else:
+        # Heel Right, Toes Left -> Extend Left
+        vis_gx1 = max(0, pa[0] - 250)
+        vis_gx2 = pa[0]
+        
     vis_gy1 = ground_y
-    
-    vis_gx2 = w_img
     vis_gy2 = ground_y
     
     ground_angle = 0.0
     ground_points = ((vis_gx1, vis_gy1), (vis_gx2, vis_gy2))
     
-    # Draw Ground Line (Cyan)
+    # Draw Ground Line (Cyan) - Short reference line
     cv2.line(vis_img, ground_points[0], ground_points[1], (255, 255, 0), 2)
     
     # --- 4. Calculation ---
+    # User Request: "0 derecelik yatay hat ile pa-pb ... arasında hesapla"
     
     # Calculate vector angle for calcaneus line (pa -> pb)
     dx = pb[0] - pa[0]
     dy = pb[1] - pa[1]
     
     if dx == 0:
-        calc_angle = 90.0
+        pitch_angle = 90.0
     else:
-        # atan2 returns -180 to 180.
-        # Since Y increases downwards, positive dy means downwards.
-        # But we only care about the absolute angle against the horizontal.
-        calc_angle = math.degrees(math.atan2(dy, dx))
-        
-    # Pitch Angle = Absolute angle of calcaneus vs horizontal (0)
-    pitch_angle = abs(calc_angle)
+        # Absolute Slope Logic (Request: "Mutlak Eğim Mantığı")
+        # Use atan(abs(dy)/abs(dx)) to ensure strict 0-90 degree acute angle regardless of direction.
+        pitch_angle = math.degrees(math.atan(abs(dy) / abs(dx)))
     pitch_angle = round(pitch_angle, 1)
 
     # --- 5. Visualization ---
