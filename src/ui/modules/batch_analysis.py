@@ -130,6 +130,8 @@ class FileScannerWorker(QThread):
         self.is_running = False
 
 class BatchAnalysisWidget(QWidget):
+    patient_selected = Signal(str, str, str) # name, id, side
+
     def __init__(self):
         super().__init__()
         self.items = [] # List of BatchItem
@@ -178,6 +180,7 @@ class BatchAnalysisWidget(QWidget):
         self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Stretch) # Name stretches
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.hideColumn(8) # Hide Path
+        self.table.itemClicked.connect(self.on_table_clicked)
         
         layout.addWidget(self.table)
         
@@ -195,7 +198,15 @@ class BatchAnalysisWidget(QWidget):
         bottom_layout.addStretch()
         
         layout.addLayout(bottom_layout)
-        
+    
+    def on_table_clicked(self, item):
+        row = item.row()
+        path = self.table.item(row, 8).text()
+        # Find item
+        batch_item = next((i for i in self.items if i.path == path), None)
+        if batch_item:
+            self.patient_selected.emit(batch_item.patient_name, batch_item.patient_id, batch_item.side)
+
     def load_folder(self):
         folder = QFileDialog.getExistingDirectory(self, "Klasör Seç")
         if not folder:
@@ -297,6 +308,7 @@ class BatchAnalysisWidget(QWidget):
     def on_item_finished(self, path, updated_item):
         # Update Row
         row = -1
+        # Optimize search? Linear is fine for <1000 items
         for r in range(self.table.rowCount()):
             if self.table.item(r, 8).text() == path:
                 row = r
@@ -304,6 +316,9 @@ class BatchAnalysisWidget(QWidget):
         
         if row != -1:
             self.table.item(row, 1).setText(updated_item.status)
+            self.table.item(row, 2).setText(updated_item.patient_id)
+            self.table.item(row, 3).setText(updated_item.patient_name)
+            self.table.item(row, 4).setText(updated_item.side)
             self.table.item(row, 5).setText(f"{updated_item.angle:.1f}°")
             
             # Diagnosis Coloring

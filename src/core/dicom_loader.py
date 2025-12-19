@@ -18,7 +18,8 @@ def load_dicom_array(dicom_path):
             "Patient ID": str(dcm.get("PatientID", "N/A")),
             "Study Date": str(dcm.get("StudyDate", "N/A")),
             "Modality": str(dcm.get("Modality", "N/A")),
-            "Body Part": str(dcm.get("BodyPartExamined", "N/A"))
+            "Body Part": str(dcm.get("BodyPartExamined", "N/A")),
+            "Laterality": str(dcm.get("ImageLaterality", dcm.get((0x0020, 0x0060), "N/A")))
         }
 
         # Apply Rescale Slope/Intercept

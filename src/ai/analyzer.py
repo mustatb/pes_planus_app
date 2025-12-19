@@ -283,7 +283,35 @@ class PesPlanusAnalyzer:
         # 2. Call the Algorithm
         vis_image, angle, calc_pts, ground_pts = analyze_calcaneal_pitch(image, mask_original)
         
-        # 3. Classify
+        # 3. Side Detection Logic
+        # Priority 1: DICOM Tag (0020, 0060)
+        predicted_side = "?"
+        if isinstance(image_data, str):
+            # Try to get metadata if possible (loaded above if dicom)
+             if image is not None and isinstance(image, tuple): # If loader returns (img, meta) - wait, loader returns img, meta or None, None
+                 pass 
+
+        # Re-check loading to be safe about metadata availability
+        metadata = {}
+        if isinstance(image_data, str) and (image_data.lower().endswith('.dcm') or image_data.lower().endswith('.dicom')):
+             _, metadata = load_dicom_array(image_data)
+        
+        if "Laterality" in metadata and metadata["Laterality"] in ["L", "R"]:
+            predicted_side = metadata["Laterality"]
+        else:
+             # Priority 2: Anatomical (Heel Position)
+             # calc_pts = (Point A (Heel), Point B (Ant))
+             # If Heel X < Ant X -> Heel is Left -> User says "Sağ Ayak" (Right Foot)
+             # If Heel X > Ant X -> Heel is Right -> User says "Sol Ayak" (Left Foot)
+             pa = calc_pts[0]
+             pb = calc_pts[1]
+             
+             if pa[0] < pb[0]:
+                 predicted_side = "R" # Sağ
+             else:
+                 predicted_side = "L" # Sol
+
+        # 4. Classify
         # <15: Pes Planus, 15-20: Borderline, 20-30: Normal, >30: Pes Cavus (Approx)
         if angle < 15:
             cat = "Pes Planus"
@@ -298,11 +326,12 @@ class PesPlanusAnalyzer:
              cat = "Pes Cavus"
              color = "#ff0000"
 
-        # 4. Prepare Result
+        # 5. Prepare Result
         return {
             "angle": angle,
             "diagnosis": cat,
             "raw_color": color, 
             "lines": [calc_pts, ground_pts], # For Canvas UI
-            "visualized_image": vis_image    # For debugging or display if needed
+            "visualized_image": vis_image,    # For debugging or display if needed
+            "side": predicted_side
         }

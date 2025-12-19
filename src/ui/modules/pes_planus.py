@@ -64,10 +64,25 @@ class PesPlanusWidget(QWidget):
         
         # Patient Info Box
         grp_patient = QGroupBox("Hasta / Dosya Bilgileri")
-        patient_layout = QVBoxLayout()
-        self.lbl_patient_info = QLabel("Bilgi yok")
-        self.lbl_patient_info.setStyleSheet("font-size: 12px; color: #b2bec3;")
-        patient_layout.addWidget(self.lbl_patient_info)
+        from PySide6.QtWidgets import QFormLayout, QLineEdit
+        patient_layout = QFormLayout()
+        
+        self.txt_patient_id = QLineEdit()
+        self.txt_patient_id.setReadOnly(True)
+        self.txt_patient_id.setPlaceholderText("-")
+        
+        self.txt_patient_name = QLineEdit()
+        self.txt_patient_name.setReadOnly(True)
+        self.txt_patient_name.setPlaceholderText("-")
+        
+        self.txt_side = QLineEdit()
+        self.txt_side.setReadOnly(True)
+        self.txt_side.setPlaceholderText("-")
+        
+        patient_layout.addRow("ID:", self.txt_patient_id)
+        patient_layout.addRow("İsim:", self.txt_patient_name)
+        patient_layout.addRow("Taraf:", self.txt_side)
+        
         grp_patient.setLayout(patient_layout)
         side_layout.addWidget(grp_patient)
         

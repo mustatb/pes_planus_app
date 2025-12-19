@@ -50,4 +50,18 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.free_drawing_widget, "Serbest Çizim & Cetvel")
         
         layout.addWidget(self.tabs)
+        
+        # Connect Signals
+        self.batch_analysis_widget.patient_selected.connect(self.on_batch_patient_selected)
+
+    def on_batch_patient_selected(self, name, pid, side):
+        # Switch to analysis tab? Optional. User might just want to see info.
+        # self.tabs.setCurrentWidget(self.pes_planus_widget)
+        
+        if hasattr(self.pes_planus_widget, 'txt_patient_name'):
+             self.pes_planus_widget.txt_patient_name.setText(name)
+        if hasattr(self.pes_planus_widget, 'txt_patient_id'):
+             self.pes_planus_widget.txt_patient_id.setText(pid)
+        if hasattr(self.pes_planus_widget, 'txt_side'):
+             self.pes_planus_widget.txt_side.setText(side)
 
