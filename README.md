@@ -7,8 +7,6 @@
 
 **Pes Planus Analiz**, ortopedik radyoloji için geliştirilmiş, yapay zeka destekli bir teşhis destek sistemidir. Ayak röntgen görüntüleri (Lateral grafi) üzerinde otomatik **Kalkaneal Eğim Açısı** ölçümü yaparak, *Pes Planus (Düz Taban)* ve *Pes Cavus (Çukur Taban)* deformitelerinin hızlı ve hassas analizini sağlar.
 
-![Uygulama Ekran Görüntüsü](https://i.imgur.com/placeholder.png) *<!-- Temsili ekran görüntüsü -->*
-
 ---
 
 ## 📋 İçindekiler
