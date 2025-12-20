@@ -283,33 +283,42 @@ class PesPlanusAnalyzer:
         # 2. Call the Algorithm
         vis_image, angle, calc_pts, ground_pts = analyze_calcaneal_pitch(image, mask_original)
         
+        # --- OCR Side Detection (New) ---
+        ocr_side = None
+        try:
+             from src.core.marker_detector import MarkerDetector
+             # Use the original full-size image
+             ocr_side = MarkerDetector.detect_side(image)
+        except Exception as e:
+             print(f"OCR Detection failed: {e}")
+
+        
         # 3. Side Detection Logic
-        # Priority 1: DICOM Tag (0020, 0060)
+        # Priority 1: OCR (Marker on Image)
+        # Priority 2: DICOM Tag (0020, 0060)
+        # Priority 3: Anatomical (Heel Position)
+        
         predicted_side = "?"
-        if isinstance(image_data, str):
-            # Try to get metadata if possible (loaded above if dicom)
-             if image is not None and isinstance(image, tuple): # If loader returns (img, meta) - wait, loader returns img, meta or None, None
-                 pass 
 
         # Re-check loading to be safe about metadata availability
         metadata = {}
         if isinstance(image_data, str) and (image_data.lower().endswith('.dcm') or image_data.lower().endswith('.dicom')):
              _, metadata = load_dicom_array(image_data)
-        
-        if "Laterality" in metadata and metadata["Laterality"] in ["L", "R"]:
+
+        if ocr_side in ["L", "R"]:
+            predicted_side = ocr_side
+        elif "Laterality" in metadata and metadata["Laterality"] in ["L", "R"]:
             predicted_side = metadata["Laterality"]
         else:
-             # Priority 2: Anatomical (Heel Position)
+             # Priority 3: Anatomical (Heel Position)
              # calc_pts = (Point A (Heel), Point B (Ant))
-             # If Heel X < Ant X -> Heel is Left -> User says "Sağ Ayak" (Right Foot)
-             # If Heel X > Ant X -> Heel is Right -> User says "Sol Ayak" (Left Foot)
              pa = calc_pts[0]
              pb = calc_pts[1]
              
              if pa[0] < pb[0]:
-                 predicted_side = "L" # Sol (Heel is Left -> Left Foot)
+                 predicted_side = "R" # Sağ (Topuk Solda -> Parmaklar Sağda -> Sağ Ayak)
              else:
-                 predicted_side = "R" # Sağ (Heel is Right -> Right Foot)
+                 predicted_side = "L" # Sol (Topuk Sağda -> Parmaklar Solda -> Sol Ayak)
 
         # 4. Classify
         # <15: Pes Planus, 15-20: Borderline, 20-30: Normal, >30: Pes Cavus (Approx)
@@ -333,5 +342,6 @@ class PesPlanusAnalyzer:
             "raw_color": color, 
             "lines": [calc_pts, ground_pts], # For Canvas UI
             "visualized_image": vis_image,    # For debugging or display if needed
-            "side": predicted_side
+            "side": predicted_side,
+            "ocr_side": ocr_side
         }

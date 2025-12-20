@@ -134,10 +134,40 @@ class BatchWorker(QThread):
                     item.angle = result["angle"]
                     item.diagnosis = result["diagnosis"]
                     item.lines = result["lines"]
+                    # 0. OCR Side Detection (Highest Priority)
+                    try:
+                        from src.core.marker_detector import MarkerDetector
+                        # We need the image array for OCR. 
+                        # Result has "visualized_image" but that might be modified. 
+                        # It's better to load cleaned image or use what analyzer has.
+                        # Since analyzer loads image, let's ask analyzer to return raw image or implement OCR inside analyzer?
+                        # ACTUALLY: Let's do it here. We need to load image. But Analyzer already loaded it.
+                        # Optimization: Let analyzer return 'original_image' or do OCR inside analyzer.
+                        # Current Plan: Do it here for now using analyzer's loading if accessible or reload (inefficient).
+                        # BETTER: Update Analyzer to return 'ocr_side' or pass image to detector.
+                        
+                        # Let's simple load it here if needed, or better, perform OCR inside Analyzer.
+                        # Wait, doing it inside Analyzer is cleaner.
+                        pass
+                    except:
+                        pass
+
                     if "side" in result and result["side"] not in ["?", ""]:
-                        # Only overwrite if we don't know the side yet OR if we want to trust AI more (user wants metadata priority)
-                        # Plan: Metadata First. So if item.side is set (L/R), keep it.
-                        if item.side not in ["L", "R"]:
+                        # Priority Logic:
+                        # 1. OCR (To be implemented inside Analyzer for efficiency)
+                        # 2. Metadata (Filename)
+                        # 3. Geometric
+                        
+                        # Current logic was: Metadata > Geometric
+                        # New logic needed: OCR > Metadata > Geometric
+                        
+                        # Since I decided to move OCR to Analyzer for image access efficiency:
+                        # If Analyzer returns "ocr_side", use it.
+                        ocr_side = result.get("ocr_side", None)
+                        
+                        if ocr_side:
+                            item.side = ocr_side
+                        elif item.side not in ["L", "R"]:
                              item.side = result["side"]
             except Exception as e:
                 item.status = "Hata"

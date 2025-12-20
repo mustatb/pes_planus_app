@@ -23,6 +23,7 @@ Bu proje, ayak röntgen görüntüleri üzerinden otomatik ve manuel olarak **Pe
   - **Standart Formatlar:** PNG, JPG, JPEG desteği.
   - **Zoom & Pan:** Görüntü üzerinde detaylı inceleme yapma imkanı (Mouse tekerleği ve sağ tık).
 - **📊 Tanı Sınıflandırması:** Ölçülen açılara göre otomatik tanı önerisi (Pes Planus, Normal, Pes Cavus vb.).
+- **📁 Toplu Analiz (Batch Analysis):** Klasör bazlı çoklu dosya işleme, Excel raporlama ve otomatik dosya isimlendirme.
 - **🎨 Modern Arayüz:** Karanlık mod (Dark Theme) ile göz yormayan, profesyonel kullanıcı deneyimi.
 
 ---
@@ -94,6 +95,17 @@ python main.py
     *   **Zemin (Mavi):** Zemin aracını seçip 2 nokta koyarak zemin doğrusunu çizin.
     *   **Kalkaneus (Pembe):** Kalkaneus aracını seçip kemik alt yüzeyine uygun 2 nokta koyarak ekseni belirleyin.
 5.  **Sonuç:** Sağ panelde ölçülen açı ve tanı sınıflandırması anlık olarak gösterilir.
+
+### 📁 Toplu Analiz Modu (Batch Analysis):
+1.  **Klasör Seç:** "Dosya" menüsünden veya araç çubuğundan "Klasör Aç" diyerek içinde alt klasörler ve görüntüler olan bir ana dizin seçin.
+2.  **Otomatik Tarama:** Sistem, seçilen klasördeki tüm uygun görüntüleri (PNG, JPG, DICOM) ve alt klasör yapılarını tarar.
+3.  **Analiz Başlat:** Sol paneldeki listeden "Toplu İşlem Başlat" butonuna (varsa) veya tek tek dosyalara tıklayarak ilerleyebilirsiniz.
+4.  **Excel Raporu:** Analizler tamamlandığında, sonuçlar otomatik olarak bir Excel tablosuna kaydedilir ve raporlanır.
+
+### ❓ Sorun Giderme
+*   **Model Yükleme Hatası:** `calcaneus_unet_resnet34_best.pth` dosyasının `main.py` ile aynı dizinde olduğundan emin olun.
+*   **Görüntü Açılmıyor:** Dosya yolunda Türkçe karakter veya özel semboller olmadığından emin olun.
+*   **OCR Hataları:** Sağ/Sol ayrımı için görüntü üzerinde 'R' veya 'L' işaretlerinin net olduğundan emin olun.
 
 ---
 
