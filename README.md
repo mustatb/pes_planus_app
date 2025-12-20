@@ -124,6 +124,5 @@ Bu proje **"Özel Lisans"** altında lisanslanmıştır. Kaynak kodları yalnız
 
 ---
 
-**Geliştirici:** Mustafa  
 **Sürüm:** 1.2.0 (Stable)  
 **Tarih:** Aralık 2025
