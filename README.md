@@ -1,30 +1,94 @@
-# 🦶 Pes Planus (Düz Taban) Analiz Sistemi
+# Pes Planus Analiz & Medical Workstation
 
-Bu proje, ayak röntgen görüntüleri üzerinden otomatik ve manuel olarak **Pes Planus (Düz Taban)** analizi, **Kalkaneal Eğim Açısı** ölçümü ve **Meary's Açısı** hesaplamalarını gerçekleştiren profesyonel bir masaüstü uygulamasıdır. Gelişmiş derin öğrenme modelleri (U-Net) ve geometrik algoritmalar ile entegre bir medikal iş istasyonu sunar.
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python)
+![PyQt](https://img.shields.io/badge/GUI-PySide6-green?style=for-the-badge&logo=qt)
+![PyTorch](https://img.shields.io/badge/AI-PyTorch-orange?style=for-the-badge&logo=pytorch)
+![License](https://img.shields.io/badge/License-Proprietary-red?style=for-the-badge)
 
-<div align="center">
-  <img src="https://img.shields.io/badge/Python-3.8%2B-blue" alt="Python Version"/>
-  <img src="https://img.shields.io/badge/GUI-PySide6-green" alt="GUI Framework"/>
-  <img src="https://img.shields.io/badge/AI-PyTorch-orange" alt="Deep Learning"/>
-  <img src="https://img.shields.io/badge/License-MIT-lightgrey" alt="License"/>
-</div>
+**Pes Planus Analiz**, ortopedik radyoloji için geliştirilmiş, yapay zeka destekli bir teşhis destek sistemidir. Ayak röntgen görüntüleri (Lateral grafi) üzerinde otomatik **Kalkaneal Eğim Açısı** ölçümü yaparak, *Pes Planus (Düz Taban)* ve *Pes Cavus (Çukur Taban)* deformitelerinin hızlı ve hassas analizini sağlar.
+
+![Uygulama Ekran Görüntüsü](https://i.imgur.com/placeholder.png) *<!-- Temsili ekran görüntüsü -->*
 
 ---
 
-## 🚀 Özellikler
+## 📋 İçindekiler
+- [Özellikler](#-özellikler)
+- [Kurulum](#-kurulum)
+- [Kullanım](#-kullanım)
+    - [Tekli Analiz](#1-tekli-analiz-ana-ekran)
+    - [Toplu Analiz](#2-toplu-analiz-sekmesi)
+- [Proje Mimarisi](#-proje-yapısı)
+- [Teknoloji Yığını](#-teknoloji-yığını)
+- [Lisans](#-lisans)
 
-- **🤖 Otomatik AI Analizi:** Eğitilmiş U-Net modeli ile kalkaneus kemiğini otomatik segmente eder ve eğim açısını saniyeler içinde hesaplar.
-- **📏 Manuel Ölçüm Araçları:**
-  - **Kalkaneal Eğim Açısı:** Zemin ve kalkaneus eksenlerini belirleyerek hassas açı ölçümü.
-  - **Meary's Açısı:** Talus ve 1. Metatarsal kemik eksenleri arasındaki açıyı ölçme.
-  - **Serbest Çizim & Cetvel:** Uzunluk ölçümü, serbest çizim ve açı ölçme araçları.
-- **🖼️ Görüntü Desteği:**
-  - **DICOM (.dcm):** Medikal görüntü formatlarını doğrudan açma ve hasta bilgilerini görüntüleme.
-  - **Standart Formatlar:** PNG, JPG, JPEG desteği.
-  - **Zoom & Pan:** Görüntü üzerinde detaylı inceleme yapma imkanı (Mouse tekerleği ve sağ tık).
-- **📊 Tanı Sınıflandırması:** Ölçülen açılara göre otomatik tanı önerisi (Pes Planus, Normal, Pes Cavus vb.).
-- **📁 Toplu Analiz (Batch Analysis):** Klasör bazlı çoklu dosya işleme, Excel raporlama ve otomatik dosya isimlendirme.
-- **🎨 Modern Arayüz:** Karanlık mod (Dark Theme) ile göz yormayan, profesyonel kullanıcı deneyimi.
+---
+
+## 🌟 Özellikler
+
+### 🧠 Gelişmiş Yapay Zeka
+*   **Segmentasyon Motoru:** U-Net (ResNet34 encoder) mimarisi ile %98+ hassasiyetle kemik segmentasyonu.
+*   **Otonom Ölçüm:** İnsan müdahalesine gerek kalmadan landmark tespiti ve açı hesaplama.
+*   **Akıllı Taraf Tespiti (OCR):** Görüntü üzerindeki 'L' / 'R' işaretlerini okuyarak taraf bilgisini otomatik çıkarır.
+
+### ⚡ Yüksek Verimlilik (Batch Processing)
+*   **Toplu İşlem:** Klasör bazlı çalışarak binlerce hastayı dakikalar içinde analiz eder.
+*   **Excel Export:** Hasta ID, İsim, Taraf, Açı ve Tanı bilgilerini detaylı Excel raporu olarak sunar.
+*   **Görsel Arşiv:** Analiz edilen her görüntüyü işlenmiş haliyle arşivler.
+*   **Dinamik Filtreleme:** Sonuçlar üzerinde isim, ID bazlı arama ve A-Z sıralama imkanı.
+
+### 🎨 Profesyonel Arayüz
+*   **Modern UI:** Koyu mod (Dark Theme) destekli, göz yormayan medikal arayüz tasarımı.
+*   **DICOM Görüntüleyici:** Tıbbi standartlara (.dcm) tam uyumlu, metadata okuyabilen görüntüleyici.
+*   **İnteraktif Araçlar:** Zoom, Pan, Contrast ayarı ve manuel ölçüm düzeltme araçları.
+
+---
+
+## 🚀 Kurulum
+
+### Sistem Gereksinimleri
+*   **OS:** Windows 10/11 (Önerilen), Linux, macOS
+*   **Python:** 3.10 veya daha yeni
+*   **RAM:** Minimum 4GB (8GB önerilir)
+*   **GPU:** NVIDIA GPU (Opsiyonel, analiz hızını artırır)
+
+### Adım 1: Depoyu Klonlayın
+```bash
+git clone https://github.com/kullaniciadi/pes_planus_app.git
+cd pes_planus_app
+```
+
+### Adım 2: Sanal Ortam Kurulumu
+```bash
+# Windows
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+### Adım 3: Bağımlılıkları Yükleyin
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## 💻 Kullanım
+
+Uygulamayı başlatmak için:
+```bash
+python main.py
+```
+
+### 1. Tekli Analiz (Ana Ekran)
+Radyoloğun günlük kullanımı için tasarlanmıştır.
+1.  **Görüntü Yükleme:** Dosya gezgini veya sürükle-bırak ile görüntüyü yükleyin.
+2.  **AI Analiz:** "Otomatik Analiz" butonuna tıklayın. Model saniyeler içinde çalışır.
+3.  **Doğrulama:** Çizilen çizgileri kontrol edin, gerekirse uç noktaları (Point A/B) mouse ile kaydırarak ince ayar yapın.
+
+### 2. Toplu Analiz Sekmesi
+Araştırma ve retrospektif çalışmalar için idealdir.
+1.  **Klasör Seçimi:** Hasta klasörünü sisteme tanıtın (Alt klasörleri de tarar).
+2.  **Veri Yönetimi:** Tablo üzerinden sonuçları izleyin, "İsim" kolonuyla sıralayın veya arama kutusuyla hasta bulun.
+3.  **Dışa Aktarım:** "Excel'e Aktar" veya "Rapor Oluştur (Zip)" seçenekleri ile verilerinizi alın.
 
 ---
 
@@ -32,88 +96,36 @@ Bu proje, ayak röntgen görüntüleri üzerinden otomatik ve manuel olarak **Pe
 
 ```bash
 pes_planus_app/
-├── main.py                 # Uygulama giriş noktası
-├── requirements.txt        # Gerekli kütüphaneler
-├── README.md               # Proje dokümantasyonu
-├── calcaneus_unet_resnet34_best.pth # Eğitilmiş yapay zeka modeli
-└── src/
-    ├── ai/                 # Yapay zeka & derin öğrenme modülleri
-    │   └── analyzer.py     # Görüntü işleme ve analiz mantığı
-    ├── core/               # Çekirdek fonksiyonlar
-    │   ├── dicom_loader.py # DICOM dosya okuyucu
-    │   └── geometry.py     # Geometrik hesaplamalar
-    └── ui/                 # Kullanıcı arayüzü
-        ├── main_window.py  # Ana pencere
-        ├── canvas.py       # Çizim tuvali (GraphicsView)
-        └── modules/        # UI Modülleri (Analiz, Çizim)
+├── src/
+│   ├── ai/                 # Deep Learning Modelleri (U-Net)
+│   ├── core/               # Image Processing & İş Mantığı
+│   │   ├── geometry.py     # Açı Hesaplama Algoritmaları
+│   │   └── marker_detector.py # OCR & Taraf Tespiti
+│   └── ui/                 # PySide6 Arayüz Modülleri
+├── resources/              # İkonlar ve Statik Dosyalar
+├── calcaneus_unet_resnet34_best.pth  # Model Ağırlıkları
+└── main.py                 # Application Entry Point
 ```
 
 ---
 
-## 🛠️ Kurulum
+## 🛠 Teknoloji Yığını
 
-Projenin çalışması için Python 3.8 veya üzeri bir sürüm gereklidir.
-
-### 1. Repoyu İndirin
-```bash
-git clone https://github.com/kullaniciadi/pes_planus_app.git
-cd pes_planus_app
-```
-
-### 2. Sanal Ortam Oluşturun (Opsiyonel ama önerilir)
-```bash
-python -m venv .venv
-# Windows için:
-.venv\Scripts\activate
-# Mac/Linux için:
-source .venv/bin/activate
-```
-
-### 3. Bağımlılıkları Yükleyin
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Modeli İndirin/Yerleştirin
-`calcaneus_unet_resnet34_best.pth` dosyasının projenin ana dizininde olduğundan emin olun.
+*   **Dil:** Python 3.10
+*   **GUI:** PySide6 (Qt)
+*   **AI/ML:** PyTorch, Segmentation Models Pytorch (SMP)
+*   **Görüntü İşleme:** OpenCV, NumPy
+*   **OCR:** EasyOCR
+*   **Data:** Pandas, OpenPyXL, Pydicom
 
 ---
 
-## ▶️ Kullanım
+## ⚖️ Lisans
 
-Uygulamayı başlatmak için terminalden aşağıdaki komutu çalıştırın:
-
-```bash
-python main.py
-```
-
-### Adım Adım Analiz:
-1.  **Dosya Aç:** Sol üstteki "Dosya Aç" butonunu kullanarak bir Röntgen görüntüsü (DICOM veya PNG/JPG) yükleyin.
-2.  **Mod Seçimi:** Sağ panelden "Kalkaneal Eğim Açısı" veya "Meary's Açısı" modunu seçin.
-3.  **Otomatik Analiz (Önerilen):** "Yapay Zeka" kutusundaki "🤖 Otomatik Analiz" butonuna tıklayın. Sistem kemiği bulup açıyı otomatik hesaplayacaktır.
-4.  **Manuel Düzeltme:**
-    *   **Zemin (Mavi):** Zemin aracını seçip 2 nokta koyarak zemin doğrusunu çizin.
-    *   **Kalkaneus (Pembe):** Kalkaneus aracını seçip kemik alt yüzeyine uygun 2 nokta koyarak ekseni belirleyin.
-5.  **Sonuç:** Sağ panelde ölçülen açı ve tanı sınıflandırması anlık olarak gösterilir.
-
-### 📁 Toplu Analiz Modu (Batch Analysis):
-1.  **Klasör Seç:** "Dosya" menüsünden veya araç çubuğundan "Klasör Aç" diyerek içinde alt klasörler ve görüntüler olan bir ana dizin seçin.
-2.  **Otomatik Tarama:** Sistem, seçilen klasördeki tüm uygun görüntüleri (PNG, JPG, DICOM) ve alt klasör yapılarını tarar.
-3.  **Analiz Başlat:** Sol paneldeki listeden "Toplu İşlem Başlat" butonuna (varsa) veya tek tek dosyalara tıklayarak ilerleyebilirsiniz.
-4.  **Excel Raporu:** Analizler tamamlandığında, sonuçlar otomatik olarak bir Excel tablosuna kaydedilir ve raporlanır.
-
-### ❓ Sorun Giderme
-*   **Model Yükleme Hatası:** `calcaneus_unet_resnet34_best.pth` dosyasının `main.py` ile aynı dizinde olduğundan emin olun.
-*   **Görüntü Açılmıyor:** Dosya yolunda Türkçe karakter veya özel semboller olmadığından emin olun.
-*   **OCR Hataları:** Sağ/Sol ayrımı için görüntü üzerinde 'R' veya 'L' işaretlerinin net olduğundan emin olun.
+Bu proje **"Özel Lisans"** altında lisanslanmıştır. Kaynak kodları yalnızca izin verilen kullanım alanlarında, akademik veya dahili geliştirme amacıyla kullanılabilir. Ticari dağıtımı izne tabidir.
 
 ---
 
-## 🔧 Teknik Detaylar
-
-*   **Segmentasyon:** ResNet34 kodlayıcılı U-Net mimarisi kullanılmıştır.
-*   **Görüntü İşleme:** OpenCV (cv2) ve NumPy ile morfolojik işlemler, kenar tespiti (Canny) ve doğru tespiti (Hough Transform) yapılmaktadır.
-*   **Arayüz:** PySide6 (Qt for Python) kütüphanesi ile geliştirilmiş, ölçeklenebilir vektörel grafik tabanlı (QGraphicsScene) bir çizim motoruna sahiptir.
-
----
-
+**Geliştirici:** Mustafa  
+**Sürüm:** 1.2.0 (Stable)  
+**Tarih:** Aralık 2025

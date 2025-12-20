@@ -2,7 +2,8 @@ import os
 import pandas as pd
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
                                QTableWidget, QTableWidgetItem, QHeaderView, QFileDialog, 
-                               QLabel, QMessageBox, QCheckBox, QDialog, QDialogButtonBox, QAbstractItemView)
+                               QLabel, QMessageBox, QCheckBox, QDialog, QDialogButtonBox, QAbstractItemView,
+                               QLineEdit)
 from PySide6.QtCore import Qt, Signal, QSize, QThread
 from PySide6.QtGui import QIcon, QColor
 
@@ -162,9 +163,16 @@ class BatchAnalysisWidget(QWidget):
         self.btn_stop.setStyleSheet("background-color: #d63031; color: white;")
         self.btn_stop.setEnabled(False)
         
+        self.txt_search = QLineEdit()
+        self.txt_search.setPlaceholderText("🔍 İsim veya ID ile ara...")
+        self.txt_search.textChanged.connect(self.filter_results)
+        self.txt_search.setFixedWidth(200)
+        
         top_layout.addWidget(btn_load)
         top_layout.addWidget(self.btn_start)
         top_layout.addWidget(self.btn_stop)
+        top_layout.addSpacing(20)
+        top_layout.addWidget(self.txt_search)
         top_layout.addStretch()
         top_layout.addWidget(self.lbl_count)
         
@@ -173,6 +181,7 @@ class BatchAnalysisWidget(QWidget):
         # 2. Table
         self.table = QTableWidget()
         self.table.setColumnCount(9)
+        self.table.setSortingEnabled(True) # Enable Header Sorting
         self.table.setHorizontalHeaderLabels([
             "Onay", "Durum", "ID", "İsim", "Taraf", "Açı", "Tanı", "İşlem", "Dosya Yolu"
         ])
@@ -206,6 +215,23 @@ class BatchAnalysisWidget(QWidget):
         batch_item = next((i for i in self.items if i.path == path), None)
         if batch_item:
             self.patient_selected.emit(batch_item.patient_name, batch_item.patient_id, batch_item.side)
+
+    def filter_results(self, text):
+        """Filters table rows by Name (Col 3) or ID (Col 2)."""
+        text = text.lower().strip()
+        for row in range(self.table.rowCount()):
+            id_item = self.table.item(row, 2)
+            name_item = self.table.item(row, 3)
+            
+            if not id_item or not name_item: continue
+            
+            id_val = id_item.text().lower()
+            name_val = name_item.text().lower()
+            
+            if text in id_val or text in name_val:
+                self.table.setRowHidden(row, False)
+            else:
+                self.table.setRowHidden(row, True)
 
     def load_folder(self):
         folder = QFileDialog.getExistingDirectory(self, "Klasör Seç")

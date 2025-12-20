@@ -12,6 +12,7 @@ from src.ai.analyzer import PesPlanusAnalyzer
 class PesPlanusWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+
         self.current_image_array = None
         self.analyzer = None # Lazy load
             
@@ -366,9 +367,7 @@ class PesPlanusWidget(QWidget):
              QMessageBox.critical(self, "Hata", f"Analiz sırasında bir hata oluştu:\n{str(e)}")
              self.lbl_status.setText("Analiz hatası.")
                 
-        except Exception as e:
-             QMessageBox.critical(self, "Hata", f"Analiz sırasında bir hata oluştu:\n{str(e)}")
-             self.lbl_status.setText("Analiz hatası.")
+
         finally:
             self.btn_ai.setEnabled(True)
             self.setCursor(Qt.CursorShape.ArrowCursor)

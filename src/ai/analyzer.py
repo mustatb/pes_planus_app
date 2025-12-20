@@ -291,7 +291,6 @@ class PesPlanusAnalyzer:
              ocr_side = MarkerDetector.detect_side(image)
         except Exception as e:
              print(f"OCR Detection failed: {e}")
-
         
         # 3. Side Detection Logic
         # Priority 1: OCR (Marker on Image)
@@ -319,6 +318,7 @@ class PesPlanusAnalyzer:
                  predicted_side = "R" # Sağ (Topuk Solda -> Parmaklar Sağda -> Sağ Ayak)
              else:
                  predicted_side = "L" # Sol (Topuk Sağda -> Parmaklar Solda -> Sol Ayak)
+             print(f"Side inferred from Anatomy: {predicted_side}")
 
         # 4. Classify
         # <15: Pes Planus, 15-20: Borderline, 20-30: Normal, >30: Pes Cavus (Approx)
