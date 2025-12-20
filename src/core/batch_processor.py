@@ -85,9 +85,14 @@ class BatchItem:
             if self.side in ["", "?"]:
                 full_check = self.path.upper()
                 # Check specifics first
-                if "_L" in full_check or "LEFT" in full_check or "SOL" in full_check:
+                # Stricter Check: Require boundaries or underscores to avoid partial matches
+                # e.g. "MESAJ" should not match "SAG"
+                # Search for "_L_", "_LEFT", " LEFT ", "SOL" (whole word) etc.
+                
+                # Regex for LEFT: (underscore or space or start) + (L|LEFT|SOL) + (underscore or space or end)
+                if re.search(r'(?:^|[_\s])(L|LEFT|SOL)(?:$|[_\s])', full_check):
                     self.side = "L"
-                elif "_R" in full_check or "RIGHT" in full_check or "SAG" in full_check or "SAĞ" in full_check:
+                elif re.search(r'(?:^|[_\s])(R|RIGHT|SAG|SAĞ)(?:$|[_\s])', full_check):
                     self.side = "R"
                 
         except Exception as e:
@@ -130,7 +135,10 @@ class BatchWorker(QThread):
                     item.diagnosis = result["diagnosis"]
                     item.lines = result["lines"]
                     if "side" in result and result["side"] not in ["?", ""]:
-                        item.side = result["side"]
+                        # Only overwrite if we don't know the side yet OR if we want to trust AI more (user wants metadata priority)
+                        # Plan: Metadata First. So if item.side is set (L/R), keep it.
+                        if item.side not in ["L", "R"]:
+                             item.side = result["side"]
             except Exception as e:
                 item.status = "Hata"
                 item.error_msg = str(e)

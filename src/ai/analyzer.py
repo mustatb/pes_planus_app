@@ -307,9 +307,9 @@ class PesPlanusAnalyzer:
              pb = calc_pts[1]
              
              if pa[0] < pb[0]:
-                 predicted_side = "R" # Sağ
+                 predicted_side = "L" # Sol (Heel is Left -> Left Foot)
              else:
-                 predicted_side = "L" # Sol
+                 predicted_side = "R" # Sağ (Heel is Right -> Right Foot)
 
         # 4. Classify
         # <15: Pes Planus, 15-20: Borderline, 20-30: Normal, >30: Pes Cavus (Approx)

@@ -237,6 +237,9 @@ class PesPlanusWidget(QWidget):
             QMessageBox.critical(self, "Hata", "Dosya yüklenemedi!")
             return
             
+        # Ensure contiguous memory for QImage
+        import numpy as np
+        arr = np.ascontiguousarray(arr)
         self.current_image_array = arr
         
         # Display Metadata
@@ -244,10 +247,18 @@ class PesPlanusWidget(QWidget):
             info_text = ""
             for k, v in metadata.items():
                 info_text += f"<b>{k}:</b> {v}<br>"
-            self.lbl_patient_info.setText(info_text)
+            # Warning: self.lbl_patient_info is not defined in init_ui, checking logic.
+            # It seems the user code from view_file (lines 66-87) uses QLineEdit fields for info, not a label 'lbl_patient_info'.
+            # I should update the LineEdits instead of trying to set non-existent 'lbl_patient_info'.
+            
+            if "Patient ID" in metadata: self.txt_patient_id.setText(metadata["Patient ID"])
+            if "Patient Name" in metadata: self.txt_patient_name.setText(metadata["Patient Name"])
+            if "Laterality" in metadata: self.txt_side.setText(metadata["Laterality"])
+            if "Identifier" in metadata: self.txt_patient_id.setText(metadata["Identifier"]) # Fallback
+            
         
         height, width = arr.shape
-        bytes_per_line = width
+        bytes_per_line = arr.strides[0]
         q_img = QImage(arr.data, width, height, bytes_per_line, QImage.Format.Format_Grayscale8)
         self.canvas.set_image(QPixmap.fromImage(q_img))
         
@@ -299,6 +310,15 @@ class PesPlanusWidget(QWidget):
             self.canvas.update_lines()
             
             self.lbl_status.setText(f"Analiz tamamlandı. Açı: {result['angle']}°")
+            
+            # Update Side Display (Fix for empty box)
+            if "side" in result:
+                 s_code = result["side"]
+                 if s_code == "L": s_text = "Sol (L)"
+                 elif s_code == "R": s_text = "Sağ (R)"
+                 else: s_text = s_code
+                 self.txt_side.setText(s_text)
+            
             
             # 3. Update Classification Display
             cat, color = get_angle_classification(result['angle'], "calcaneal")
